@@ -3,6 +3,22 @@ import maya.cmds as mc
 
 from PySide2.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 
+def CreateBox(name, size):
+    pntPositions = ((-0.5,0.5,0.5), (0.5,0.5,0.5), (0.5,0.5,-0.5), (-0.5, 0.5, -0.5), (-0.5, 0.5, 0.5), (-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (0.5, 0.5, 0.5), (0.5, -0.5, 0.5), (0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, -0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, -0.5, 0.5))
+    mc.curve(n = name, d=1, p = pntPositions)
+    mc.setAttr(name + ".scale", size, size, size, type = "float3")
+    mc.makeIdentity(name, apply = True) # this is freeze transformation
+    
+def CreateCircleController(jnt, size):
+    name = "ac_" + jnt
+    mc.circle(n = name, nr=(1,0,0), r = size/2)
+    ctrlGrpName = name + "_grp"
+    mc.group(name, n = ctrlGrpName)
+    mc.matchTransform(ctrlGrpName, jnt)
+    mc.orientConstraint(name, jnt)
+
+    return name, ctrlGrpName
+
 class CreateLimbControl:
     def __init__(self):
         self.root = ""
@@ -15,7 +31,21 @@ class CreateLimbControl:
         self.end = mc.listRelatives(self.mid, c=True, type = "joint")[0]
 
     def RigLimb(self):
-        
+        rootCtrl, rootCtrlGrp = CreateCircleController(self.root, 20)
+        midCtrl, midCtrlGrp = CreateCircleController(self.mid, 20)
+        endCtrl, endCtrlGrp = CreateCircleController(self.end, 20)
+
+        mc.parent(midCtrlGrp, rootCtrl)
+        mc.parent(endCtrlGrp, midCtrl)
+
+        ikEndCtrl = "ac_ik_" + self.end
+        CreateBox(ikEndCtrl, 10)
+        ikEndCtrlGrp = ikEndCtrl + "_grp"
+        mc.group(ikEndCtrl, n = ikEndCtrlGrp)
+        mc.matchTransform(ikEndCtrlGrp, self.end)
+        mc.orientConstraint(ikEndCtrl, self.end)
+
+
 
 
 class CreateLimbControllerWidget(QWidget):
