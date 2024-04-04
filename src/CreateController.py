@@ -9,6 +9,11 @@ class CreateLimbControl:
         self.mid = ""
         self.end = ""
 
+    def FindJntsBasedOnRootSel(self):
+        self.root = mc.ls(sl=True, type = "joint")[0]
+        self.mid = mc.listRelatives(self.root, c=True, type="joint")[0]
+        self.end = mc.listRelatives(self.end, c=True, type = "joint")[0]
+
 class CreateLimbControllerWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -28,10 +33,6 @@ class CreateLimbControllerWidget(QWidget):
 
     def FindJntBtnClicked(self):
         print("I am clicked")
-
-
-
-
 
 controllerWidget = CreateLimbControllerWidget()
 controllerWidget.show()
