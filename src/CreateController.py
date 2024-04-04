@@ -3,7 +3,13 @@ import maya.cmds as mc
 
 from PySide2.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 
-class CreateControllerWidget(QWidget):
+class CreateLimbControl:
+    def __init__(self):
+        self.root = ""
+        self.mid = ""
+        self.end = ""
+
+class CreateLimbControllerWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Create IKFK Limb")
@@ -27,6 +33,6 @@ class CreateControllerWidget(QWidget):
 
 
 
-controllerWidget = CreateControllerWidget()
+controllerWidget = CreateLimbControllerWidget()
 controllerWidget.show()
 
