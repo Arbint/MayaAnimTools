@@ -45,8 +45,8 @@ class CreateLimbControl:
         mc.matchTransform(ikEndCtrlGrp, self.end)
         mc.orientConstraint(ikEndCtrl, self.end)
 
-
-
+        ikHandleName = "ikHandle_" + self.end
+        mc.ikHandle(n=ikHandleName, sj = self.root, ee=self.end, sol="ikRPsolver")
 
 class CreateLimbControllerWidget(QWidget):
     def __init__(self):
