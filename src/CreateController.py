@@ -29,10 +29,16 @@ class CreateLimbControllerWidget(QWidget):
         findJntsBtn.clicked.connect(self.FindJntBtnClicked)
 
         self.masterLayout.addWidget(findJntsBtn)
+
+        self.autoFindJntDisplay = QLabel("")
+        self.masterLayout.addWidget(self.autoFindJntDisplay)
         self.adjustSize()
 
+        self.createLimbCtrl = CreateLimbControl()
+
     def FindJntBtnClicked(self):
-        print("I am clicked")
+        self.createLimbCtrl.FindJntsBasedOnRootSel()
+        self.autoFindJntDisplay.setText(f"{self.createLimbCtrl.root},{self.createLimbCtrl.mid},{self.createLimbCtrl.end}")
 
 controllerWidget = CreateLimbControllerWidget()
 controllerWidget.show()
