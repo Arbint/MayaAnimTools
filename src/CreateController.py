@@ -14,6 +14,10 @@ class CreateLimbControl:
         self.mid = mc.listRelatives(self.root, c=True, type="joint")[0]
         self.end = mc.listRelatives(self.mid, c=True, type = "joint")[0]
 
+    def RigLimb(self):
+        
+
+
 class CreateLimbControllerWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -34,11 +38,18 @@ class CreateLimbControllerWidget(QWidget):
         self.masterLayout.addWidget(self.autoFindJntDisplay)
         self.adjustSize()
 
+        rigLimbBtn = QPushButton("Rig Limb")
+        rigLimbBtn.clicked.connect(self.RigLimbBtnClicked)
+        self.masterLayout.addWidget(rigLimbBtn)
+
         self.createLimbCtrl = CreateLimbControl()
 
     def FindJntBtnClicked(self):
         self.createLimbCtrl.FindJntsBasedOnRootSel()
         self.autoFindJntDisplay.setText(f"{self.createLimbCtrl.root},{self.createLimbCtrl.mid},{self.createLimbCtrl.end}")
+
+    def RigLimbBtnClicked(self):
+        self.createLimbCtrl.RigLimb()
 
 controllerWidget = CreateLimbControllerWidget()
 controllerWidget.show()
