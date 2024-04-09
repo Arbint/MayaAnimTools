@@ -19,6 +19,34 @@ def CreateCircleController(jnt, size):
 
     return name, ctrlGrpName
 
+class Vector:
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    # this enables Vector + Vector
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+    
+    #this enables Vector - Vector 
+    def __sub__(self, other):
+        return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    #we are defining Vector * float
+    def __mul__(self, scalar):
+        return Vector(self.x * scalar, self.y * scalar, self.z * scalar)
+    
+    #we are defining vector / float
+    def __truediv__(self, scalar):
+        return Vector(self.x / scalar, self.y / scalar, self.z / scalar)
+
+    def GetLength(self):
+        return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5 
+
+    def GetNormalized(self): 
+        return self/self.GetLength()
+
 class CreateLimbControl:
     def __init__(self):
         self.root = ""
@@ -47,6 +75,12 @@ class CreateLimbControl:
 
         ikHandleName = "ikHandle_" + self.end
         mc.ikHandle(n=ikHandleName, sj = self.root, ee=self.end, sol="ikRPsolver")
+
+        poleVector = mc.getAttr(ikHandleName+".poleVector")[0]
+        poleVector = Vector(poleVector[0], poleVector[1], poleVector[2])
+        
+        print(poleVector)
+
 
 class CreateLimbControllerWidget(QWidget):
     def __init__(self):
