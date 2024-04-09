@@ -19,6 +19,13 @@ def CreateCircleController(jnt, size):
 
     return name, ctrlGrpName
 
+def GetObjPos(obj):
+    pos = mc.getAttr(obj + ".translate")[0]
+    return Vector(pos[0], pos[1], pos[2])
+
+def SetObjPos(obj, pos):
+    mc.setAttr(obj + ".translate", pos.x, pos.y, pos.z, type = "float3")
+
 class Vector:
     def __init__(self, x, y, z):
         self.x = x
@@ -46,6 +53,9 @@ class Vector:
 
     def GetNormalized(self): 
         return self/self.GetLength()
+
+    def __str__(self):
+        return f"<{self.x} {self.y} {self.z}>"
 
 class CreateLimbControl:
     def __init__(self):
@@ -78,8 +88,20 @@ class CreateLimbControl:
 
         poleVector = mc.getAttr(ikHandleName+".poleVector")[0]
         poleVector = Vector(poleVector[0], poleVector[1], poleVector[2])
-        
-        print(poleVector)
+                
+        rootPos = GetObjPos(self.root)
+        endPos = GetObjPos(self.end)
+
+        rootToEndVec = endPos - rootPos
+        armHalfLength = rootToEndVec.GetLength()/2
+
+        poleVecPos = rootPos + rootToEndVec/2 + poleVector * armHalfLength
+        ikMidCtrl = "ac_ik_" + self.mid
+        mc.spaceLocator(n=ikMidCtrl) # make a locator with the name ac_ik_ + self.mid
+        ikMidCtrlGrp = ikMidCtrl + "_grp" # figure out the group name of that locator
+        mc.group(ikMidCtrl, n = ikMidCtrlGrp) #group the locator with the name
+        SetObjPos(ikMidCtrlGrp, poleVecPos) #make the locator to the polevector location we figured out
+        mc.poleVectorConstraint(ikMidCtrl, ikHandleName)
 
 
 class CreateLimbControllerWidget(QWidget):
