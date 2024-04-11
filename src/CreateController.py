@@ -139,7 +139,10 @@ class CreateLimbControl:
         SetChannelHidden(ikfkBlendCtrl, 'sy')
         SetChannelHidden(ikfkBlendCtrl, 'sz')
         SetChannelHidden(ikfkBlendCtrl, 'v')
-        
+
+        ikfkBlendAttr = "ikfkBlend"
+        mc.addAttr(ikfkBlendCtrl, ln=ikfkBlendAttr, k=True, min = 0, max = 1)        
+        mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, ikHandleName + ".ikBlend")
 
 
 class CreateLimbControllerWidget(QWidget):
