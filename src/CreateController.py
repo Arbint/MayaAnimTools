@@ -8,7 +8,13 @@ def CreateBox(name, size):
     mc.curve(n = name, d=1, p = pntPositions)
     mc.setAttr(name + ".scale", size, size, size, type = "float3")
     mc.makeIdentity(name, apply = True) # this is freeze transformation
-    
+
+def CreatePlus(name, size):
+    pntPositions = ((0.5,0,1),(0.5,0,0.5),(1,0,0.5),(1,0,-0.5),(0.5, 0,-0.5), (0.5, 0, -1),(-0.5, 0, -1),(-0.5,0,-0.5),(-1, 0, -0.5),(-1,0,0.5),(-0.5,0,0.5),(-0.5,0,1),(0.5,0,1))
+    mc.curve(n = name, d=1, p = pntPositions)
+    mc.setAttr(name + ".scale", size, size, size, type = "float3")
+    mc.makeIdentity(name, apply = True) # this is freeze transformation
+
 def CreateCircleController(jnt, size):
     name = "ac_" + jnt
     mc.circle(n = name, nr=(1,0,0), r = size/2)
@@ -20,7 +26,10 @@ def CreateCircleController(jnt, size):
     return name, ctrlGrpName
 
 def GetObjPos(obj):
-    pos = mc.getAttr(obj + ".translate")[0]
+    # q means we are querying
+    # t means we are querying the translate
+    # ws means we are querying in the world space
+    pos = mc.xform(obj, q=True, t=True, ws=True)
     return Vector(pos[0], pos[1], pos[2])
 
 def SetObjPos(obj, pos):
@@ -88,9 +97,13 @@ class CreateLimbControl:
 
         poleVector = mc.getAttr(ikHandleName+".poleVector")[0]
         poleVector = Vector(poleVector[0], poleVector[1], poleVector[2])
-                
+        poleVector = poleVector.GetNormalized()
+
         rootPos = GetObjPos(self.root)
         endPos = GetObjPos(self.end)
+
+        print(rootPos)
+        print(endPos)
 
         rootToEndVec = endPos - rootPos
         armHalfLength = rootToEndVec.GetLength()/2
@@ -101,7 +114,20 @@ class CreateLimbControl:
         ikMidCtrlGrp = ikMidCtrl + "_grp" # figure out the group name of that locator
         mc.group(ikMidCtrl, n = ikMidCtrlGrp) #group the locator with the name
         SetObjPos(ikMidCtrlGrp, poleVecPos) #make the locator to the polevector location we figured out
-        mc.poleVectorConstraint(ikMidCtrl, ikHandleName)
+        mc.poleVectorConstraint(ikMidCtrl, ikHandleName) #do pole vector constraint.
+        mc.parent(ikHandleName, ikEndCtrl)
+        mc.hide(ikHandleName)
+
+        ikfkBlendCtrl = "ac_" + self.root + "_ikfkBlend"
+        CreatePlus(ikfkBlendCtrl, 2)
+        ikfkBlendCtrlGrp = ikfkBlendCtrl + "_grp"
+        mc.group(ikfkBlendCtrl, n = ikfkBlendCtrlGrp)
+        ikfkBlendCtrlPos = rootPos + Vector(rootPos.x,0,0)
+        SetObjPos(ikfkBlendCtrlGrp, ikfkBlendCtrlPos)
+        
+
+
+
 
 
 class CreateLimbControllerWidget(QWidget):
