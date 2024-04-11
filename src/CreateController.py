@@ -15,6 +15,9 @@ def CreatePlus(name, size):
     mc.setAttr(name + ".scale", size, size, size, type = "float3")
     mc.makeIdentity(name, apply = True) # this is freeze transformation
 
+def SetChannelHidden(name, channel):
+    mc.setAttr(name + "." + channel, k=False, channelBox = False)
+
 def CreateCircleController(jnt, size):
     name = "ac_" + jnt
     mc.circle(n = name, nr=(1,0,0), r = size/2)
@@ -124,10 +127,19 @@ class CreateLimbControl:
         mc.group(ikfkBlendCtrl, n = ikfkBlendCtrlGrp)
         ikfkBlendCtrlPos = rootPos + Vector(rootPos.x,0,0)
         SetObjPos(ikfkBlendCtrlGrp, ikfkBlendCtrlPos)
+        mc.setAttr(ikfkBlendCtrlGrp+".rotateX", 90)
+
+        SetChannelHidden(ikfkBlendCtrl, 'tx')
+        SetChannelHidden(ikfkBlendCtrl, 'ty')
+        SetChannelHidden(ikfkBlendCtrl, 'tz')
+        SetChannelHidden(ikfkBlendCtrl, 'rx')
+        SetChannelHidden(ikfkBlendCtrl, 'ry')
+        SetChannelHidden(ikfkBlendCtrl, 'rz')
+        SetChannelHidden(ikfkBlendCtrl, 'sx')
+        SetChannelHidden(ikfkBlendCtrl, 'sy')
+        SetChannelHidden(ikfkBlendCtrl, 'sz')
+        SetChannelHidden(ikfkBlendCtrl, 'v')
         
-
-
-
 
 
 class CreateLimbControllerWidget(QWidget):
