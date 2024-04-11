@@ -93,7 +93,7 @@ class CreateLimbControl:
         ikEndCtrlGrp = ikEndCtrl + "_grp"
         mc.group(ikEndCtrl, n = ikEndCtrlGrp)
         mc.matchTransform(ikEndCtrlGrp, self.end)
-        mc.orientConstraint(ikEndCtrl, self.end)
+        endJntOrientConstraint = mc.orientConstraint(ikEndCtrl, self.end)[0]
 
         ikHandleName = "ikHandle_" + self.end
         mc.ikHandle(n=ikHandleName, sj = self.root, ee=self.end, sol="ikRPsolver")
@@ -143,6 +143,15 @@ class CreateLimbControl:
         ikfkBlendAttr = "ikfkBlend"
         mc.addAttr(ikfkBlendCtrl, ln=ikfkBlendAttr, k=True, min = 0, max = 1)        
         mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, ikHandleName + ".ikBlend")
+
+        reverseNode = "reverse_" + self.root + "_ikfkBlend"
+        mc.createNode("reverse", n = reverseNode)
+
+        mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, reverseNode+".inputX")
+        mc.connectAttr(reverseNode + ".outputX", endJntOrientConstraint + ".w0")
+        mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, endJntOrientConstraint+".w1")
+
+        
 
 
 class CreateLimbControllerWidget(QWidget):
