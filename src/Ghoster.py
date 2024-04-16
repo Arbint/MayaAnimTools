@@ -47,7 +47,7 @@ class Ghost:
 
     def GoToNextGhost(self):
         frames = self.GetGhostFramesSorted() # find all the frames we have in ascending order
-        if not frames: # if theres is not frames, there is not ghost, do nothing
+        if not frames: # if theres is no frames, there is no ghost, do nothing
             return
 
         currentFrame = GetCurrentFrame()        
@@ -56,11 +56,23 @@ class Ghost:
                 mc.currentTime(frame, e=True) # e means edit, we are editing the time slider to be at frame
                 return
         
-        mc.currentTime(frames[0], e=True) # found no frame bigger, got to the beginning
+        mc.currentTime(frames[0], e=True) # found no frame bigger, go to the beginning
 
     def GoToPrevGhost(self):
         # to go backwards, you can use the frames.reverse(), it will reverse frames make it in decending order.
-        pass
+        frames = self.GetGhostFramesSorted()
+        if not frames:
+            return
+
+        currentFrame = GetCurrentFrame()
+        frames.reverse()
+        for frame in frames:
+            if frame < currentFrame:
+                mc.currentTime(frame, e=True)
+                return
+
+        mc.currentTime(frames[0], e=True)
+
 
     def GetGhostFramesSorted(self):
         frames = set()
