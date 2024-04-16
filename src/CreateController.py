@@ -150,9 +150,12 @@ class CreateLimbControl:
         mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, reverseNode+".inputX")
         mc.connectAttr(reverseNode + ".outputX", endJntOrientConstraint + ".w0")
         mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, endJntOrientConstraint+".w1")
-
         
+        mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, ikMidCtrlGrp + ".v")
+        mc.connectAttr(reverseNode + ".outputX", rootCtrl + ".v")
+        mc.connectAttr(ikfkBlendCtrl + "." + ikfkBlendAttr, ikEndCtrlGrp + ".v")
 
+        mc.group(ikfkBlendCtrlGrp, ikEndCtrlGrp, ikMidCtrlGrp, rootCtrlGrp, n = rootCtrlGrp + "_limb_grp")
 
 class CreateLimbControllerWidget(QWidget):
     def __init__(self):
