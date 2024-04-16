@@ -8,13 +8,20 @@ class Ghost:
     def __init__(self):
         self.srcMeshes = set() # a set is a list that has unique elements.
         self.ghostGrp = "ghost_grp"
+        self.frameAttr = "frame"
+        self.srcAttr = "src"
+
         self.InitIfGhostGrpNotExist()
 
     def InitIfGhostGrpNotExist(self):
         if mc.objExists(self.ghostGrp):
+            storedSrcMeshes = mc.getAttr(self.ghostGrp + "." + self.srcAttr)
+            self.srcMeshes = set(storedSrcMeshes.split(","))
             return
         
         mc.createNode("transform", n = self.ghostGrp)
+        mc.addAttr(self.ghostGrp, ln = self.srcAttr, dt="string")
+
         
     def SetSelectedAsSrcMesh(self):
         selection = mc.ls(sl=True)
@@ -25,13 +32,18 @@ class Ghost:
                 if mc.objectType(s) == "mesh": # the object is a mesh
                     self.srcMeshes.add(selected) # add the mesh to our set.
 
+        mc.setAttr(self.ghostGrp + "." + self.srcAttr, ",".join(self.srcMeshes), type = "string")
+
     def AddGhost(self):
         for srcMesh in self.srcMeshes:
             currentFrame = GetCurrentFrame()
             ghostName = srcMesh + "_" + str(currentFrame)
+            if mc.objExists(ghostName):
+                mc.delete(ghostName)
+
             mc.duplicate(srcMesh, n = ghostName)
             mc.parent(ghostName, self.ghostGrp)
-
+            mc.addAttr(ghostName, ln = self.frameAttr, dv = currentFrame)
 
 
 class GhostWidget(QWidget):
@@ -45,6 +57,7 @@ class GhostWidget(QWidget):
         self.srcMeshList = QListWidget() # create a list to show stuff.
         self.srcMeshList.setSelectionMode(QAbstractItemView.ExtendedSelection) # allow multi-seleciton
         self.srcMeshList.itemSelectionChanged.connect(self.SrcMeshSelectionChanged)
+        self.srcMeshList.addItems(self.ghost.srcMeshes)
         self.masterLayout.addWidget(self.srcMeshList) # this adds the list created previously to the layout.
 
         addSrcMeshBtn = QPushButton("Add Source Mesh")
@@ -54,7 +67,7 @@ class GhostWidget(QWidget):
         self.ctrlLayout = QHBoxLayout()
         self.masterLayout.addLayout(self.ctrlLayout)
 
-        addGhostBtn = QPushButton("Add")
+        addGhostBtn = QPushButton("Add/Update")
         addGhostBtn.clicked.connect(self.ghost.AddGhost)
         self.ctrlLayout.addWidget(addGhostBtn)
 
