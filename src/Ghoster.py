@@ -46,19 +46,20 @@ class Ghost:
             mc.addAttr(ghostName, ln = self.frameAttr, dv = currentFrame)
 
     def GoToNextGhost(self):
-        frames = self.GetGhostFramesSorted()
-        if not frames:
+        frames = self.GetGhostFramesSorted() # find all the frames we have in ascending order
+        if not frames: # if theres is not frames, there is not ghost, do nothing
             return
-            
+
         currentFrame = GetCurrentFrame()        
-        for frame in frames:
-            if frame > currentFrame:
+        for frame in frames: #go through each frame
+            if frame > currentFrame: #if we find one that is bigger than the current frame, it should be where we move time slider to.
                 mc.currentTime(frame, e=True) # e means edit, we are editing the time slider to be at frame
                 return
         
-        mc.currentTime(frames[0], e=True)
+        mc.currentTime(frames[0], e=True) # found no frame bigger, got to the beginning
 
     def GoToPrevGhost(self):
+        # to go backwards, you can use the frames.reverse(), it will reverse frames make it in decending order.
         pass
 
     def GetGhostFramesSorted(self):
