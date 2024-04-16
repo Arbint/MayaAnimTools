@@ -1,10 +1,21 @@
 import maya.cmds as mc
 from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView
 
+def GetCurrentFrame():
+    return int(mc.currentTime(query=True))
+
 class Ghost:
     def __init__(self):
         self.srcMeshes = set() # a set is a list that has unique elements.
+        self.ghostGrp = "ghost_grp"
+        self.InitIfGhostGrpNotExist()
 
+    def InitIfGhostGrpNotExist(self):
+        if mc.objExists(self.ghostGrp):
+            return
+        
+        mc.createNode("transform", n = self.ghostGrp)
+        
     def SetSelectedAsSrcMesh(self):
         selection = mc.ls(sl=True)
         self.srcMeshes.clear() # removes all elements in the set.
@@ -13,6 +24,15 @@ class Ghost:
             for s in shapes:
                 if mc.objectType(s) == "mesh": # the object is a mesh
                     self.srcMeshes.add(selected) # add the mesh to our set.
+
+    def AddGhost(self):
+        for srcMesh in self.srcMeshes:
+            currentFrame = GetCurrentFrame()
+            ghostName = srcMesh + "_" + str(currentFrame)
+            mc.duplicate(srcMesh, n = ghostName)
+            mc.parent(ghostName, self.ghostGrp)
+
+
 
 class GhostWidget(QWidget):
     def __init__(self):
@@ -24,11 +44,24 @@ class GhostWidget(QWidget):
 
         self.srcMeshList = QListWidget() # create a list to show stuff.
         self.srcMeshList.setSelectionMode(QAbstractItemView.ExtendedSelection) # allow multi-seleciton
+        self.srcMeshList.itemSelectionChanged.connect(self.SrcMeshSelectionChanged)
         self.masterLayout.addWidget(self.srcMeshList) # this adds the list created previously to the layout.
 
         addSrcMeshBtn = QPushButton("Add Source Mesh")
         addSrcMeshBtn.clicked.connect(self.AddSrcMeshBtnClicked)
         self.masterLayout.addWidget(addSrcMeshBtn)
+
+        self.ctrlLayout = QHBoxLayout()
+        self.masterLayout.addLayout(self.ctrlLayout)
+
+        addGhostBtn = QPushButton("Add")
+        addGhostBtn.clicked.connect(self.ghost.AddGhost)
+        self.ctrlLayout.addWidget(addGhostBtn)
+
+    def SrcMeshSelectionChanged(self):
+        mc.select(cl=True) # this deselect everything.
+        for item in self.srcMeshList.selectedItems():
+            mc.select(item.text(), add = True)
 
     def AddSrcMeshBtnClicked(self):
         self.ghost.SetSelectedAsSrcMesh() # asks ghost to populate it's srcMeshes with the current selection
