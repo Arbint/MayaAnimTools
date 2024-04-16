@@ -45,6 +45,35 @@ class Ghost:
             mc.parent(ghostName, self.ghostGrp)
             mc.addAttr(ghostName, ln = self.frameAttr, dv = currentFrame)
 
+    def GoToNextGhost(self):
+        frames = self.GetGhostFramesSorted()
+        if not frames:
+            return
+            
+        currentFrame = GetCurrentFrame()        
+        for frame in frames:
+            if frame > currentFrame:
+                mc.currentTime(frame, e=True) # e means edit, we are editing the time slider to be at frame
+                return
+        
+        mc.currentTime(frames[0], e=True)
+
+    def GoToPrevGhost(self):
+        pass
+
+    def GetGhostFramesSorted(self):
+        frames = set()
+        ghosts = mc.listRelatives(self.ghostGrp, c=True)
+        if not ghosts:
+            return []
+        
+        for ghost in ghosts:
+            frame = mc.getAttr(ghost + "." + self.frameAttr)
+            frames.add(frame)
+
+        frames = list(frames) # this converts frames to a list
+        frames.sort() # this sorts the frames list to ascending order
+        return frames # returns the sorted frames
 
 class GhostWidget(QWidget):
     def __init__(self):
@@ -70,6 +99,15 @@ class GhostWidget(QWidget):
         addGhostBtn = QPushButton("Add/Update")
         addGhostBtn.clicked.connect(self.ghost.AddGhost)
         self.ctrlLayout.addWidget(addGhostBtn)
+
+        prevGhostBtn = QPushButton("Prev")
+        prevGhostBtn.clicked.connect(self.ghost.GoToPrevGhost)
+        self.ctrlLayout.addWidget(prevGhostBtn)
+
+        nextGhostBtn = QPushButton("Next")
+        nextGhostBtn.clicked.connect(self.ghost.GoToNextGhost)
+        self.ctrlLayout.addWidget(nextGhostBtn)
+
 
     def SrcMeshSelectionChanged(self):
         mc.select(cl=True) # this deselect everything.
