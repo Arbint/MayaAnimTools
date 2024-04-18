@@ -1,6 +1,6 @@
 import maya.cmds as mc
-from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView
-
+from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView, QColorDialog
+from PySide2.QtGui import QColor, QPainter, QBrush
 def GetCurrentFrame():
     return int(mc.currentTime(query=True))
 
@@ -27,17 +27,19 @@ class Ghost:
             self.DeleteGhost(ghost)
 
     def DeleteGhost(self, ghost):
+        #delete the material
         mat = self.GetMaterialNameForGhost(ghost)
         if mc.objExists(mat):
             mc.delete(mat)
+        
+        #delete the shading engine
         sg = self.GetShadingEngineForGhost(ghost)
         if mc.objExists(sg):
             mc.delete(sg)
-
+        
+        #delete the ghost model
         if mc.objExists(ghost):
             mc.delete(ghost)
-
-
 
     def InitIfGhostGrpNotExist(self):
         if mc.objExists(self.ghostGrp):
@@ -132,6 +134,22 @@ class Ghost:
         frames.sort() # this sorts the frames list to ascending order
         return frames # returns the sorted frames
 
+class ColorPicker(QWidget):
+    def __init__(self, width = 80, height = 20):
+        super().__init__()
+        self.setFixedSize(width, height)
+        self.color = QColor()
+
+    def mousePressEvent(self, event):
+        color = QColorDialog().getColor(self.color) 
+        self.color = color
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setBrush(QBrush(self.color))
+        painter.drawRect(0,0,self.width(), self.height())
+
 class GhostWidget(QWidget):
     def __init__(self):
         super().__init__() # needed to call if you are inheriting from a parent class
@@ -172,7 +190,9 @@ class GhostWidget(QWidget):
         removeAllGhostBtn = QPushButton("Del All")
         removeAllGhostBtn.clicked.connect(self.ghost.DeleteAllGhosts)
         self.ctrlLayout.addWidget(removeAllGhostBtn)
-                            
+
+        colorPicker = ColorPicker()
+        self.masterLayout.addWidget(colorPicker)                     
 
     def SrcMeshSelectionChanged(self):
         mc.select(cl=True) # this deselect everything.
