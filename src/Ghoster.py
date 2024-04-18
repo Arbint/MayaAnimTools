@@ -60,6 +60,24 @@ class Ghost:
             mc.duplicate(srcMesh, n = ghostName)
             mc.parent(ghostName, self.ghostGrp)
             mc.addAttr(ghostName, ln = self.frameAttr, dv = currentFrame)
+            
+            matName = self.GetMaterialNameForGhost(ghostName) # figure out the name for the material
+            if not mc.objExists(matName): # check if material not exist
+                mc.shadingNode("lambert", asShader = True, name = matName) # create the lambert material if not exists
+            
+            sgName = self.GetShadingEngineForGhost(ghostName) # fiture out the name of the shading engine
+            if not mc.objExists(sgName): # check if the shading engine exists
+                mc.sets(name = sgName, renderable = True, empty = True) # create the shading engine if not exists
+
+            mc.connectAttr(matName + ".outColor", sgName + ".surfaceShader", force = True) # connet the material to the shading engine
+            mc.sets(ghostName, edit=True, forceElement = sgName) # assign the material to ghost
+
+
+    def GetShadingEngineForGhost(self, ghost):
+        return ghost + "_sg"
+    
+    def GetMaterialNameForGhost(self, ghost):
+        return ghost + "_mat"
 
     def GoToNextGhost(self):
         frames = self.GetGhostFramesSorted() # find all the frames we have in ascending order
@@ -139,7 +157,7 @@ class GhostWidget(QWidget):
 
         removeCurrentGhostBtn = QPushButton("Del")
         removeCurrentGhostBtn.clicked.connect(self.ghost.DeleteGhostAtCurrentFrame)
-        self.ctrlLayout.addWidget(removeCurrentGhostBtn)         
+        self.ctrlLayout.addWidget(removeCurrentGhostBtn)       
 
         removeAllGhostBtn = QPushButton("Del All")
         removeAllGhostBtn.clicked.connect(self.ghost.DeleteAllGhosts)
