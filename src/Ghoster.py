@@ -1,4 +1,5 @@
 import maya.cmds as mc
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView, QColorDialog
 from PySide2.QtGui import QColor, QPainter, QBrush
 def GetCurrentFrame():
@@ -10,8 +11,17 @@ class Ghost:
         self.ghostGrp = "ghost_grp"
         self.frameAttr = "frame"
         self.srcAttr = "src"
-
+        self.color = [0,0,0]
         self.InitIfGhostGrpNotExist()
+
+    def UpdateGhostColors(self, color: QColor):
+        ghosts = mc.listRelatives(self.ghostGrp, c=True)
+        self.color[0] = color.redF()
+        self.color[1] = color.greenF()
+        self.color[2] = color.blueF()
+        for ghost in ghosts:
+            mat = self.GetMaterialNameForGhost(ghost)
+            mc.setAttr(mat + ".color", color.redF(), color.greenF(), color.blueF(), type = "double3")
 
     def DeleteGhostAtCurrentFrame(self):
         currentFrame = GetCurrentFrame()
@@ -44,7 +54,8 @@ class Ghost:
     def InitIfGhostGrpNotExist(self):
         if mc.objExists(self.ghostGrp):
             storedSrcMeshes = mc.getAttr(self.ghostGrp + "." + self.srcAttr)
-            self.srcMeshes = set(storedSrcMeshes.split(","))
+            if storedSrcMeshes:
+                self.srcMeshes = set(storedSrcMeshes.split(","))
             return
         
         mc.createNode("transform", n = self.ghostGrp)
@@ -84,6 +95,7 @@ class Ghost:
             mc.connectAttr(matName + ".outColor", sgName + ".surfaceShader", force = True) # connet the material to the shading engine
             mc.sets(ghostName, edit=True, forceElement = sgName) # assign the material to ghost
 
+            mc.setAttr(matName + ".color", self.color[0], self.color[1], self.color[2], type = "double3")
 
     def GetShadingEngineForGhost(self, ghost):
         return ghost + "_sg"
@@ -135,6 +147,7 @@ class Ghost:
         return frames # returns the sorted frames
 
 class ColorPicker(QWidget):
+    onColorChanged = Signal(QColor) # this adds a built in class member called onColorChanged.
     def __init__(self, width = 80, height = 20):
         super().__init__()
         self.setFixedSize(width, height)
@@ -143,6 +156,7 @@ class ColorPicker(QWidget):
     def mousePressEvent(self, event):
         color = QColorDialog().getColor(self.color) 
         self.color = color
+        self.onColorChanged.emit(self.color)
         self.update()
 
     def paintEvent(self, event):
@@ -192,6 +206,7 @@ class GhostWidget(QWidget):
         self.ctrlLayout.addWidget(removeAllGhostBtn)
 
         colorPicker = ColorPicker()
+        colorPicker.onColorChanged.connect(self.ghost.UpdateGhostColors)
         self.masterLayout.addWidget(colorPicker)                     
 
     def SrcMeshSelectionChanged(self):
