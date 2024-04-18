@@ -13,6 +13,22 @@ class Ghost:
 
         self.InitIfGhostGrpNotExist()
 
+    def DeleteGhostAtCurrentFrame(self):
+        currentFrame = GetCurrentFrame()
+        ghosts = mc.listRelatives(self.ghostGrp, c=True) #gets all children of the ghost grp 
+        for ghost in ghosts:
+            ghostFrame = mc.getAttr(ghost + "." + self.frameAttr) # ask for the frame recorded for the ghost
+            if ghostFrame == currentFrame: # if the ghost frame is the same as the current frame.
+                self.DeleteGhost(ghost) # remove that ghost
+
+    def DeleteAllGhosts(self):
+        ghosts = mc.listRelatives(self.ghostGrp, c=True)
+        for ghost in ghosts:
+            self.DeleteGhost(ghost)
+
+    def DeleteGhost(self, ghost):
+        mc.delete(ghost)
+
     def InitIfGhostGrpNotExist(self):
         if mc.objExists(self.ghostGrp):
             storedSrcMeshes = mc.getAttr(self.ghostGrp + "." + self.srcAttr)
@@ -121,6 +137,14 @@ class GhostWidget(QWidget):
         nextGhostBtn.clicked.connect(self.ghost.GoToNextGhost)
         self.ctrlLayout.addWidget(nextGhostBtn)
 
+        removeCurrentGhostBtn = QPushButton("Del")
+        removeCurrentGhostBtn.clicked.connect(self.ghost.DeleteGhostAtCurrentFrame)
+        self.ctrlLayout.addWidget(removeCurrentGhostBtn)         
+
+        removeAllGhostBtn = QPushButton("Del All")
+        removeAllGhostBtn.clicked.connect(self.ghost.DeleteAllGhosts)
+        self.ctrlLayout.addWidget(removeAllGhostBtn)
+                            
 
     def SrcMeshSelectionChanged(self):
         mc.select(cl=True) # this deselect everything.
