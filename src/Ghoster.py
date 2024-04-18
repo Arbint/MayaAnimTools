@@ -27,7 +27,17 @@ class Ghost:
             self.DeleteGhost(ghost)
 
     def DeleteGhost(self, ghost):
-        mc.delete(ghost)
+        mat = self.GetMaterialNameForGhost(ghost)
+        if mc.objExists(mat):
+            mc.delete(mat)
+        sg = self.GetShadingEngineForGhost(ghost)
+        if mc.objExists(sg):
+            mc.delete(sg)
+
+        if mc.objExists(ghost):
+            mc.delete(ghost)
+
+
 
     def InitIfGhostGrpNotExist(self):
         if mc.objExists(self.ghostGrp):
