@@ -13,11 +13,18 @@ class Ghost:
         self.srcAttr = "src"
         self.color = [0,0,0]
         self.transparencyRange = 100
+        self.transparencyOffset = 0
+        self.timeChangeJob = mc.scriptJob(e=["timeChanged", self.TimeChangedEvent])
         self.InitIfGhostGrpNotExist()
 
+    def TimeChangedEvent(self):
+        self.UpdateGhostTransparency()
 
-    def UpdateTransparencyRange(self, newRange):
-        self.transparencyRange = newRange
+    def OffsetGhostTransparency(self, value):
+        self.transparencyOffset = value/100
+        self.UpdateGhostTransparency()
+
+    def UpdateGhostTransparency(self):
         currentFrame = GetCurrentFrame() 
         ghosts = mc.listRelatives(self.ghostGrp, c=True)
         if not ghosts:
@@ -27,12 +34,18 @@ class Ghost:
             ghostFrame = mc.getAttr(ghost + "." + self.frameAttr)
             ghostFrameDist = abs(ghostFrame - currentFrame) # the abs function gives you the absolute value of the argument.
             normalizedDist = ghostFrameDist / self.transparencyRange
+            normalizedDist += self.transparencyOffset
             if normalizedDist > 1:
                 normalizedDist = 1
             
             mat = self.GetMaterialNameForGhost(ghost)
             if mc.objExists(mat):
                 mc.setAttr(mat + ".transparency", normalizedDist, normalizedDist, normalizedDist, type = "double3")
+        
+    def UpdateTransparencyRange(self, newRange):
+        self.transparencyRange = newRange
+        self.UpdateGhostTransparency()
+
 
     def UpdateGhostColors(self, color: QColor):
         ghosts = mc.listRelatives(self.ghostGrp, c=True)
@@ -237,6 +250,13 @@ class GhostWidget(QWidget):
         self.transparencyRangeSlider.setMinimum(0)
         self.transparencyRangeSlider.setMaximum(200)
         self.materialLayout.addWidget(self.transparencyRangeSlider)
+
+        self.transparencyOffset = QSlider()
+        self.transparencyOffset.setOrientation(Qt.Horizontal)
+        self.transparencyOffset.valueChanged.connect(self.ghost.OffsetGhostTransparency)
+        self.transparencyOffset.setMinimum(0)
+        self.transparencyOffset.setMaximum(100)
+        self.masterLayout.addWidget(self.transparencyOffset)
 
     def TransparencyValueChanged(self, value):
         self.ghost.UpdateTransparencyRange(value)
