@@ -1,6 +1,6 @@
 import maya.cmds as mc
-from PySide2.QtCore import Signal
-from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView, QColorDialog
+from PySide2.QtCore import Signal, Qt
+from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QAbstractItemView, QColorDialog, QSlider
 from PySide2.QtGui import QColor, QPainter, QBrush
 def GetCurrentFrame():
     return int(mc.currentTime(query=True))
@@ -12,7 +12,27 @@ class Ghost:
         self.frameAttr = "frame"
         self.srcAttr = "src"
         self.color = [0,0,0]
+        self.transparencyRange = 100
         self.InitIfGhostGrpNotExist()
+
+
+    def UpdateTransparencyRange(self, newRange):
+        self.transparencyRange = newRange
+        currentFrame = GetCurrentFrame() 
+        ghosts = mc.listRelatives(self.ghostGrp, c=True)
+        if not ghosts:
+            return
+        
+        for ghost in ghosts:
+            ghostFrame = mc.getAttr(ghost + "." + self.frameAttr)
+            ghostFrameDist = abs(ghostFrame - currentFrame) # the abs function gives you the absolute value of the argument.
+            normalizedDist = ghostFrameDist / self.transparencyRange
+            if normalizedDist > 1:
+                normalizedDist = 1
+            
+            mat = self.GetMaterialNameForGhost(ghost)
+            if mc.objExists(mat):
+                mc.setAttr(mat + ".transparency", normalizedDist, normalizedDist, normalizedDist, type = "double3")
 
     def UpdateGhostColors(self, color: QColor):
         ghosts = mc.listRelatives(self.ghostGrp, c=True)
@@ -205,9 +225,21 @@ class GhostWidget(QWidget):
         removeAllGhostBtn.clicked.connect(self.ghost.DeleteAllGhosts)
         self.ctrlLayout.addWidget(removeAllGhostBtn)
 
+        self.materialLayout = QHBoxLayout()
+        self.masterLayout.addLayout(self.materialLayout)
         colorPicker = ColorPicker()
         colorPicker.onColorChanged.connect(self.ghost.UpdateGhostColors)
-        self.masterLayout.addWidget(colorPicker)                     
+        self.materialLayout.addWidget(colorPicker)                     
+
+        self.transparencyRangeSlider = QSlider()
+        self.transparencyRangeSlider.setOrientation(Qt.Horizontal)
+        self.transparencyRangeSlider.valueChanged.connect(self.TransparencyValueChanged)
+        self.transparencyRangeSlider.setMinimum(0)
+        self.transparencyRangeSlider.setMaximum(200)
+        self.materialLayout.addWidget(self.transparencyRangeSlider)
+
+    def TransparencyValueChanged(self, value):
+        self.ghost.UpdateTransparencyRange(value)
 
     def SrcMeshSelectionChanged(self):
         mc.select(cl=True) # this deselect everything.
