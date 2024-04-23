@@ -1,5 +1,5 @@
 import maya.cmds as mc
-from PySide2.QtWidgets import QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide2.QtWidgets import QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
 
 class MayaToUE:
     def __init__(self):
@@ -41,6 +41,8 @@ class MayaToUE:
         meshes = set() # creates a local variable of the type set
         for sel in selection: # loop through everything we select
             shapes = mc.listRelatives(sel, s=True) # find their shape nodes
+            if not shapes:
+                continue
             for s in shapes: # for each shape node we find
                 if mc.objectType(s) == "mesh": #check if there are mesh shapes.
                     meshes.add(sel) # if they are mesh shapes, we will collect them
@@ -71,6 +73,28 @@ class MayaToUEWidget(QWidget):
         addUnrealRootBtn.clicked.connect(self.AddUnrealRootBtnClicked)
         self.masterLayout.addWidget(addUnrealRootBtn)
 
+        self.meshList = QListWidget()
+        self.meshList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.meshList.itemSelectionChanged.connect(self.MeshListSelectionChanged)
+        self.masterLayout.addWidget(self.meshList)
+        assignSelectedMeshBtn = QPushButton("Assign Selected Meshs")
+        assignSelectedMeshBtn.clicked.connect(self.AssignSelectedMeshBtnClicked)
+        self.masterLayout.addWidget(assignSelectedMeshBtn) 
+
+    def AssignSelectedMeshBtnClicked(self):
+        success, msg = self.mayaToUE.SetSelectedAsMeshes()
+        if success:
+            self.meshList.clear()
+            self.meshList.addItems(self.mayaToUE.meshes)
+        else:
+            QMessageBox().warning(self, "Warning", msg)
+
+    def MeshListSelectionChanged(self):
+        mc.select(cl=True)
+    
+        for item in self.meshList.selectedItems():
+            mc.select(item.text(), add=True)
+    
     def AddUnrealRootBtnClicked(self):
         success, msg = self.mayaToUE.TryAddUnrealRootJnt()
         if success:
