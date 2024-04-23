@@ -63,28 +63,33 @@ class MayaToUE:
 class AnimEntry(QWidget):
     def __init__(self, animClip: AnimClip):
         super().__init__()
+        self.animClip = animClip
         self.masterLayout = QHBoxLayout()
         self.setLayout(self.masterLayout)
 
         self.toggleBox = QCheckBox()
         self.toggleBox.setChecked(animClip.shouldExport)
+        self.toggleBox.toggled.connect(self.ToggleBoxToggled)
         self.masterLayout.addWidget(self.toggleBox)
 
         subfixLabel = QLabel("Subfix: ")
         self.masterLayout.addWidget(subfixLabel)
         self.subfixLineEdit = QLineEdit()
+        self.subfixLineEdit.textChanged.connect(self.SubfixTextChanged)
         self.subfixLineEdit.setText(animClip.subfix)
         self.masterLayout.addWidget(self.subfixLineEdit)
 
         startFrameLabel = QLabel("Start: ")
         self.masterLayout.addWidget(startFrameLabel)
         self.startFrameLineEdit = QLineEdit()
+        self.startFrameLineEdit.textChanged.connect(self.StartFrameChanged)
         self.startFrameLineEdit.setText(str(animClip.frameStart))
         self.masterLayout.addWidget(self.startFrameLineEdit)
 
         endFrameLabel = QLabel("End: ")
         self.masterLayout.addWidget(endFrameLabel)
         self.endFrameLineEdit = QLineEdit()
+        self.endFrameLineEdit.textChanged.connect(self.EndFrameChanged)
         self.endFrameLineEdit.setText(str(animClip.frameEnd))
         self.masterLayout.addWidget(self.endFrameLineEdit)
 
@@ -95,6 +100,18 @@ class AnimEntry(QWidget):
         removeBtn = QPushButton("[X]")
         removeBtn.clicked.connect(self.RemoveBtnClicked)
         self.masterLayout.addWidget(removeBtn)
+    
+    def EndFrameChanged(self):
+        pass
+
+    def StartFrameChanged(self):
+        pass
+    
+    def SubfixTextChanged(self):
+        pass 
+
+    def ToggleBoxToggled(self):
+        self.animClip.shouldExport = not self.animClip.shouldExport
 
     def RemoveBtnClicked(self):
         pass
