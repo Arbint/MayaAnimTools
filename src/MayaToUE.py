@@ -17,6 +17,22 @@ class MayaToUE:
         self.rootJnt = selection[0]
         return True, ""
 
+    def TryAddUnrealRootJnt(self):
+        if (not self.rootJnt) or (not mc.objExists(self.rootJnt)):
+            return False, "Need to Assign Root Joint First"
+        
+        # q means query, t means translate, ws means world space.
+        currentRootPos = mc.xform(self.rootJnt, q=True, t=True, ws=True)
+        if currentRootPos[0] == 0 and currentRootPos[1] == 0 and currentRootPos[2] == 0:
+            return False, "Root Joint Already Exists"
+        
+        rootJntName = self.rootJnt + "_root"
+        mc.select(cl=True) # cl meand cancel.
+        mc.joint(name = rootJntName)
+        mc.parent(self.rootJnt, rootJntName)
+        self.rootJnt = rootJntName
+        return True, ""
+
     def SetSelectedAsMeshes(self):
         selection = mc.ls(sl=True)
         if not selection:
@@ -50,6 +66,18 @@ class MayaToUEWidget(QWidget):
         setSelectedAsRootJntBtn = QPushButton("Set Selected As Root Joint")
         setSelectedAsRootJntBtn.clicked.connect(self.SetSelectedAsRootBtnClicked)
         self.masterLayout.addWidget(setSelectedAsRootJntBtn)
+
+        addUnrealRootBtn = QPushButton("Add Unreal Root Joint")
+        addUnrealRootBtn.clicked.connect(self.AddUnrealRootBtnClicked)
+        self.masterLayout.addWidget(addUnrealRootBtn)
+
+    def AddUnrealRootBtnClicked(self):
+        success, msg = self.mayaToUE.TryAddUnrealRootJnt()
+        if success:
+            self.jointLineEdit.setText(self.mayaToUE.rootJnt)
+        else:
+            QMessageBox().warning(self, "warning", msg)
+
 
     def SetSelectedAsRootBtnClicked(self):
         success, msg = self.mayaToUE.SetSelectedAsRootJnt()
