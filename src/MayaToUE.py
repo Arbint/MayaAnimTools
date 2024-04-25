@@ -1,3 +1,4 @@
+from PySide2.QtCore import Signal
 from PySide2.QtGui import QIntValidator, QRegExpValidator 
 import maya.cmds as mc
 from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
@@ -66,6 +67,7 @@ class MayaToUE:
         return True, ""
         
 class AnimEntry(QWidget):
+    entryRemoved = Signal(AnimClip)
     def __init__(self, animClip: AnimClip):
         super().__init__()
         self.animClip = animClip
@@ -125,6 +127,7 @@ class AnimEntry(QWidget):
         self.animClip.shouldExport = not self.animClip.shouldExport
 
     def RemoveBtnClicked(self):
+        self.entryRemoved.emit(self.animClip) # this calls the function connected to the entryRemoved signal.
         self.deleteLater() #remove this widget the next time it is proper.
 
     def SetRangeBtnClicked(self):
@@ -136,7 +139,7 @@ class MayaToUEWidget(QWidget):
         self.mayaToUE = MayaToUE()
         self.masterLayout = QVBoxLayout()
         self.setLayout(self.masterLayout)
-
+        self.setFixedWidth(500)
         self.jointLineEdit = QLineEdit()
         self.jointLineEdit.setEnabled(False) # make it grayed out.
         self.masterLayout.addWidget(self.jointLineEdit)
@@ -151,6 +154,7 @@ class MayaToUEWidget(QWidget):
 
         self.meshList = QListWidget()
         self.meshList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.meshList.setFixedHeight(80)
         self.meshList.itemSelectionChanged.connect(self.MeshListSelectionChanged)
         self.masterLayout.addWidget(self.meshList)
         assignSelectedMeshBtn = QPushButton("Assign Selected Meshs")
@@ -167,7 +171,12 @@ class MayaToUEWidget(QWidget):
     def AddNewAnimEntryBtnClicked(self):
         newClip = self.mayaToUE.AddAnimClip()
         newEntry = AnimEntry(newClip)
+        newEntry.entryRemoved.connect(self.RemoveAnimEntry)
         self.animEntryLayout.addWidget(newEntry)
+
+    def RemoveAnimEntry(self, clipToRemove):
+        self.adjustSize()
+        self.mayaToUE.animations.remove(clipToRemove)
 
     def AssignSelectedMeshBtnClicked(self):
         success, msg = self.mayaToUE.SetSelectedAsMeshes()
