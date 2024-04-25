@@ -1,3 +1,4 @@
+import os
 from PySide2.QtCore import Signal
 from PySide2.QtGui import QIntValidator, QRegExpValidator 
 import maya.cmds as mc
@@ -17,6 +18,25 @@ class MayaToUE:
         self.fileName = ""
         self.animations = []
         self.saveDir = ""
+
+    def SetSaveDir(self, newSaveDir):
+        self.saveDir = newSaveDir
+
+    def GetSkeletalMeshSavePath(self):        
+        # in windows, this path could be: c:\dev\myPrj\alex.fbx
+        # in mac/linux, this path could be: ~/dev/myPrj/alex.fbx
+        # path could be c:\dev/myPrj\sdfsdf.fbx
+
+        path = os.path.join(self.saveDir, self.fileName + ".fbx") # is the raw path.
+        return os.path.normpath(path) # normalize the path.
+
+    def GetAnimFolder(self):
+        path = os.path.join(self.saveDir, "anim")
+        return os.path.normpath(path)
+
+    def GetAnimClipSavePath(self, clip: AnimClip):
+        path = os.path.join(self.GetAnimFolder(), self.fileName + "_" + clip.subfix)
+        return os.path.normpath(path)
 
     def AddAnimClip(self):
         self.animations.append(AnimClip())
@@ -167,6 +187,28 @@ class MayaToUEWidget(QWidget):
         
         self.animEntryLayout = QVBoxLayout()
         self.masterLayout.addLayout(self.animEntryLayout)
+
+        self.saveFileLayout = QHBoxLayout()
+        self.masterLayout.addLayout(self.saveFileLayout)
+        fileNameLabel = QLabel("Name: ")
+        self.saveFileLayout.addWidget(fileNameLabel)
+        self.fileNameLineEdit = QLineEdit()
+        self.fileNameLineEdit.setFixedWidth(80)
+        self.fileNameLineEdit.setValidator(QRegExpValidator("\w+"))
+        self.saveFileLayout.addWidget(self.fileNameLineEdit)
+
+        fileDirLabel = QLabel("Save Directory: ")
+        self.saveFileLayout.addWidget(fileDirLabel)
+        self.saveDirLineEdit = QLineEdit()
+        self.saveDirLineEdit.setEnabled(False)
+        self.saveFileLayout.addWidget(self.saveDirLineEdit)
+
+        setSaveDirBtn = QPushButton("...")
+        setSaveDirBtn.clicked.connect(self.SetSaveDirBtnClicked)
+        self.saveFileLayout.addWidget(setSaveDirBtn)
+
+    def SetSaveDirBtnClicked(self):
+        pass
 
     def AddNewAnimEntryBtnClicked(self):
         newClip = self.mayaToUE.AddAnimClip()
