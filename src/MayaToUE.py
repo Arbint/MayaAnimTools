@@ -1,4 +1,4 @@
-from PySide2.QtGui import QIntValidator
+from PySide2.QtGui import QIntValidator, QRegExpValidator 
 import maya.cmds as mc
 from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
 
@@ -16,6 +16,10 @@ class MayaToUE:
         self.fileName = ""
         self.animations = []
         self.saveDir = ""
+
+    def AddAnimClip(self):
+        self.animations.append(AnimClip())
+        return self.animations[-1]       
 
     def SetSelectedAsRootJnt(self):
         selection = mc.ls(sl = True, type = "joint")
@@ -76,6 +80,7 @@ class AnimEntry(QWidget):
         subfixLabel = QLabel("Subfix: ")
         self.masterLayout.addWidget(subfixLabel)
         self.subfixLineEdit = QLineEdit()
+        self.subfixLineEdit.setValidator(QRegExpValidator('\w+'))
         self.subfixLineEdit.textChanged.connect(self.SubfixTextChanged)
         self.subfixLineEdit.setText(animClip.subfix)
         self.masterLayout.addWidget(self.subfixLineEdit)
@@ -105,19 +110,22 @@ class AnimEntry(QWidget):
         self.masterLayout.addWidget(removeBtn)
     
     def EndFrameChanged(self):
-        self.animClip.frameEnd = int(self.endFrameLineEdit.text())
+        if self.endFrameLineEdit.text():
+            self.animClip.frameEnd = int(self.endFrameLineEdit.text())
 
     def StartFrameChanged(self):
-        self.animClip.frameStart = int(self.startFrameLineEdit.text())
+        if self.startFrameLineEdit.text():
+            self.animClip.frameStart = int(self.startFrameLineEdit.text())
     
     def SubfixTextChanged(self):
-        pass 
+        if self.subfixLineEdit.text():
+            self.animClip.subfix = self.subfixLineEdit.text() 
 
     def ToggleBoxToggled(self):
         self.animClip.shouldExport = not self.animClip.shouldExport
 
     def RemoveBtnClicked(self):
-        pass
+        self.deleteLater() #remove this widget the next time it is proper.
 
     def SetRangeBtnClicked(self):
         mc.playbackOptions(minTime = self.animClip.frameStart, maxTime = self.animClip.frameEnd)
@@ -148,8 +156,18 @@ class MayaToUEWidget(QWidget):
         assignSelectedMeshBtn = QPushButton("Assign Selected Meshs")
         assignSelectedMeshBtn.clicked.connect(self.AssignSelectedMeshBtnClicked)
         self.masterLayout.addWidget(assignSelectedMeshBtn) 
-        testAnimEntry = AnimEntry(AnimClip())
-        self.masterLayout.addWidget(testAnimEntry)
+        
+        addAnimEntryBtn = QPushButton("Add New Animation Clip")
+        addAnimEntryBtn.clicked.connect(self.AddNewAnimEntryBtnClicked)
+        self.masterLayout.addWidget(addAnimEntryBtn)
+        
+        self.animEntryLayout = QVBoxLayout()
+        self.masterLayout.addLayout(self.animEntryLayout)
+
+    def AddNewAnimEntryBtnClicked(self):
+        newClip = self.mayaToUE.AddAnimClip()
+        newEntry = AnimEntry(newClip)
+        self.animEntryLayout.addWidget(newEntry)
 
     def AssignSelectedMeshBtnClicked(self):
         success, msg = self.mayaToUE.SetSelectedAsMeshes()
