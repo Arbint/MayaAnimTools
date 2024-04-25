@@ -2,7 +2,7 @@ import os
 from PySide2.QtCore import Signal
 from PySide2.QtGui import QIntValidator, QRegExpValidator 
 import maya.cmds as mc
-from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
+from PySide2.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
 
 class AnimClip:
     def __init__(self):
@@ -35,7 +35,7 @@ class MayaToUE:
         return os.path.normpath(path)
 
     def GetAnimClipSavePath(self, clip: AnimClip):
-        path = os.path.join(self.GetAnimFolder(), self.fileName + "_" + clip.subfix)
+        path = os.path.join(self.GetAnimFolder(), self.fileName + "_" + clip.subfix + ".fbx")
         return os.path.normpath(path)
 
     def AddAnimClip(self):
@@ -87,6 +87,7 @@ class MayaToUE:
         return True, ""
         
 class AnimEntry(QWidget):
+    entryNameChanged = Signal(str)
     entryRemoved = Signal(AnimClip)
     def __init__(self, animClip: AnimClip):
         super().__init__()
@@ -142,6 +143,7 @@ class AnimEntry(QWidget):
     def SubfixTextChanged(self):
         if self.subfixLineEdit.text():
             self.animClip.subfix = self.subfixLineEdit.text() 
+            self.entryNameChanged.emit(self.animClip.subfix)
 
     def ToggleBoxToggled(self):
         self.animClip.shouldExport = not self.animClip.shouldExport
@@ -195,6 +197,7 @@ class MayaToUEWidget(QWidget):
         self.fileNameLineEdit = QLineEdit()
         self.fileNameLineEdit.setFixedWidth(80)
         self.fileNameLineEdit.setValidator(QRegExpValidator("\w+"))
+        self.fileNameLineEdit.textChanged.connect(self.FineNameChanged)
         self.saveFileLayout.addWidget(self.fileNameLineEdit)
 
         fileDirLabel = QLabel("Save Directory: ")
@@ -207,18 +210,45 @@ class MayaToUEWidget(QWidget):
         setSaveDirBtn.clicked.connect(self.SetSaveDirBtnClicked)
         self.saveFileLayout.addWidget(setSaveDirBtn)
 
+        self.savePreviewLabel = QLabel()
+        self.masterLayout.addWidget(self.savePreviewLabel)
+
+    def UpdateSavePreview(self):
+        previewText = ""
+        skeletalMeshFilePath = self.mayaToUE.GetSkeletalMeshSavePath()
+        previewText += skeletalMeshFilePath
+
+        if self.mayaToUE.animations:
+            for anim in self.mayaToUE.animations:
+                animPath = self.mayaToUE.GetAnimClipSavePath(anim)
+                previewText += "\n" + animPath
+
+        self.savePreviewLabel.setText(previewText)
+        self.adjustSize()
+
     def SetSaveDirBtnClicked(self):
-        pass
+        #path = mc.fileDialog2(dir="~/", dialogStyle = 2, fileMode = 3)
+        dir = QFileDialog().getExistingDirectory()
+        self.mayaToUE.saveDir = dir
+        self.saveDirLineEdit.setText(dir)
+        self.UpdateSavePreview()
+
+    def FineNameChanged(self, newName):
+        self.mayaToUE.fileName = newName
+        self.UpdateSavePreview()
 
     def AddNewAnimEntryBtnClicked(self):
         newClip = self.mayaToUE.AddAnimClip()
         newEntry = AnimEntry(newClip)
         newEntry.entryRemoved.connect(self.RemoveAnimEntry)
+        newEntry.entryNameChanged.connect(self.UpdateSavePreview)
         self.animEntryLayout.addWidget(newEntry)
+        self.UpdateSavePreview()
 
     def RemoveAnimEntry(self, clipToRemove):
         self.adjustSize()
         self.mayaToUE.animations.remove(clipToRemove)
+        self.UpdateSavePreview()
 
     def AssignSelectedMeshBtnClicked(self):
         success, msg = self.mayaToUE.SetSelectedAsMeshes()
