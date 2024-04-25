@@ -1,10 +1,11 @@
+from PySide2.QtGui import QIntValidator
 import maya.cmds as mc
 from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QPushButton, QVBoxLayout, QWidget, QAbstractItemView
 
 class AnimClip:
     def __init__(self):
-        self.frameStart = mc.playbackOptions(q = True, min = True)
-        self.frameEnd = mc.playbackOptions(q = True, max = True)
+        self.frameStart = int(mc.playbackOptions(q = True, min = True))
+        self.frameEnd = int(mc.playbackOptions(q = True, max = True))
         self.subfix = ""
         self.shouldExport = True
 
@@ -82,6 +83,7 @@ class AnimEntry(QWidget):
         startFrameLabel = QLabel("Start: ")
         self.masterLayout.addWidget(startFrameLabel)
         self.startFrameLineEdit = QLineEdit()
+        self.startFrameLineEdit.setValidator(QIntValidator())
         self.startFrameLineEdit.textChanged.connect(self.StartFrameChanged)
         self.startFrameLineEdit.setText(str(animClip.frameStart))
         self.masterLayout.addWidget(self.startFrameLineEdit)
@@ -89,6 +91,7 @@ class AnimEntry(QWidget):
         endFrameLabel = QLabel("End: ")
         self.masterLayout.addWidget(endFrameLabel)
         self.endFrameLineEdit = QLineEdit()
+        self.endFrameLineEdit.setValidator(QIntValidator())
         self.endFrameLineEdit.textChanged.connect(self.EndFrameChanged)
         self.endFrameLineEdit.setText(str(animClip.frameEnd))
         self.masterLayout.addWidget(self.endFrameLineEdit)
@@ -102,10 +105,10 @@ class AnimEntry(QWidget):
         self.masterLayout.addWidget(removeBtn)
     
     def EndFrameChanged(self):
-        pass
+        self.animClip.frameEnd = int(self.endFrameLineEdit.text())
 
     def StartFrameChanged(self):
-        pass
+        self.animClip.frameStart = int(self.startFrameLineEdit.text())
     
     def SubfixTextChanged(self):
         pass 
@@ -117,8 +120,7 @@ class AnimEntry(QWidget):
         pass
 
     def SetRangeBtnClicked(self):
-        pass
-
+        mc.playbackOptions(minTime = self.animClip.frameStart, maxTime = self.animClip.frameEnd)
 
 class MayaToUEWidget(QWidget):
     def __init__(self):
