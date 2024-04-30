@@ -33,7 +33,23 @@ class MayaToUE:
 
         mc.FBXExport('-f', skeletalMeshSavePath, '-s', True, '-ea', False)
 
+        if not self.animations:
+            return
+        
+        os.makedirs(self.GetAnimFolder(), exist_ok = True)
+        mc.FBXExportBakeComplexAnimation('-v', True)
+        for anim in self.animations:
+            animSavelPath = self.GetAnimClipSavePath(anim)
+            
+            startFrame = anim.frameStart
+            endFrame = anim.frameEnd
 
+            mc.FBXExportBakeComplexStart('-v', startFrame)
+            mc.FBXExportBakeComplexEnd('-v', endFrame)
+            mc.FBXExportBakeComplexStep('-v', 1)
+
+            mc.playbackOptions(e=True, min = startFrame, max = endFrame)
+            mc.FBXExport('-f', animSavelPath, '-s', True, '-ea', True)
 
 
     def SetSaveDir(self, newSaveDir):
