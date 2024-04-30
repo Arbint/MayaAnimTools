@@ -19,6 +19,23 @@ class MayaToUE:
         self.animations = []
         self.saveDir = ""
 
+    def SaveFiles(self):
+        childrenJnts = mc.listRelatives(self.rootJnt, c=True, ad=True, type = "joint")
+        allJnts = [self.rootJnt] + childrenJnts        
+        objsToExport = allJnts + list(self.meshes)
+
+        mc.select(objsToExport, r=True)
+        skeletalMeshSavePath = self.GetSkeletalMeshSavePath()
+
+        mc.FBXResetExport()
+        mc.FBXExportSmoothingGroups('-v', True)
+        mc.FBXExportInputConnections('-v', False)        
+
+        mc.FBXExport('-f', skeletalMeshSavePath, '-s', True, '-ea', False)
+
+
+
+
     def SetSaveDir(self, newSaveDir):
         self.saveDir = newSaveDir
 
@@ -212,6 +229,10 @@ class MayaToUEWidget(QWidget):
 
         self.savePreviewLabel = QLabel()
         self.masterLayout.addWidget(self.savePreviewLabel)
+
+        saveBtn = QPushButton("Save Files")
+        saveBtn.clicked.connect(self.mayaToUE.SaveFiles)
+        self.masterLayout.addWidget(saveBtn)
 
     def UpdateSavePreview(self):
         previewText = ""
